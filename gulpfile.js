@@ -1,19 +1,20 @@
-// npm install --save-dev gulp gulp-babel babelify through2 gulp-rename gulp-load-plugins
+// npm install --save-dev gulp gulp-babel babelify through2 gulp-rename gulp-load-plugins browser-sync gulp-sass gulp-sourcemaps jquery
 
-var gulp = require('gulp');
-var $ = require('gulp-load-plugins')();
-var browserify = require('browserify');
-var through2 = require('through2');
-var babelify = require('babelify');
-var browserSync = require("browser-sync");
+var gulp = require('gulp')
+var gulpLoad = require('gulp-load-plugins')()
 
-var srcApp = './src/app.js';
-var srcWatchPath = './src/**/*.js'
-var distAppPath = './dist';
-var distAppFile = 'app.js';
+var browserify = require('browserify')
+var through2 = require('through2')
+var babelify = require('babelify')
+
+var browserSync = require("browser-sync")
+var reload = browserSync.reload;
+
+var sass = require('gulp-sass')
+var sourcemaps = require('gulp-sourcemaps')
 
 gulp.task('build', function() {
-    return gulp.src(srcApp)
+    return gulp.src('./src/app.js')
         .pipe(through2.obj(function(file, enc, next) {
             browserify(file.path, {
                 //debug: process.env.NODE_ENV === 'development'
@@ -21,35 +22,44 @@ gulp.task('build', function() {
             })
             .transform(babelify)
             .bundle(function(err, res) {
-                if (err) return next(err);
+                if (err) return next(err)
 
-                file.contents = res;
-                next(null, file);
-            });
+                file.contents = res
+                next(null, file)
+            })
         }))
         .on('error', function(error) {
-            console.log(error.stack);
-            this.emit('end');
+            console.log(error.stack)
+            this.emit('end')
         })
-        .pipe($.rename(distAppFile))
-        .pipe(gulp.dest(distAppPath));
-});
+        .pipe(gulpLoad.rename('app.js'))
+        .pipe(gulp.dest('./www'))
+})
 
-gulp.task('js-watch', ['build'], browserSync.reload);
+gulp.task('sass', function () {
+    return gulp.src('./src/scss/*.scss')
+        .pipe(sourcemaps.init())
+        .pipe(sass())
+        .pipe(sourcemaps.write('./maps'))
+        .pipe(gulp.dest('./www/css'))
+})
 
-gulp.task('serve', ['build'], function() {
-    browserSync({
-        sever: {
-            baseDir: './dist'
-        }
-    })
-
-    gulp.watch(srcWatchPath, ['js-watch']);
+gulp.task('html', function() {
+    return gulp.src('./src/**/*.html')
+        .pipe(gulp.dest('./www'))
 })
 
 
-gulp.task('watch', function() {
-    gulp.watch(srcWatchPath, ['build']);
-});
+gulp.task('serve', ['sass', 'html', 'build'], function() {
+    browserSync({
+        sever: {
+            baseDir: './www'
+        }
+    })
 
-gulp.task('default', ['serve']);
+    gulp.watch('./src/scss/*.scss', ['sass']).on('change', reload)
+    gulp.watch('./src/**/*.html', ['html']).on('change', reload)
+    gulp.watch('./src/**/*.js', ['build']).on('change', reload)
+})
+
+gulp.task('default', ['serve'])
