@@ -9,7 +9,7 @@ $(function($) {
     console.log('1')
     console.log($)
 
-    $('div').text('test3')
+    $('div').text('test2')
 
     console.log(2)
 })

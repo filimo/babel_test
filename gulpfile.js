@@ -13,6 +13,8 @@ var reload = browserSync.reload;
 var sass = require('gulp-sass')
 var sourcemaps = require('gulp-sourcemaps')
 
+var notify = require('gulp-notify')
+
 gulp.task('build', function() {
     gulp.src('./src/app.js')
         .pipe(through2.obj(function(file, enc, next) {
@@ -35,6 +37,7 @@ gulp.task('build', function() {
         .pipe(gulpLoad.rename('app.js'))
         .pipe(gulp.dest('./www'))
         .pipe(reload({stream: true}))
+        .pipe(notify('Js is updated!'))
 })
 
 gulp.task('sass', function () {
@@ -44,12 +47,14 @@ gulp.task('sass', function () {
         .pipe(sourcemaps.write('./maps'))
         .pipe(gulp.dest('./www/css'))
         .pipe(reload({stream: true}))
+        .pipe(notify('Sass is updated!'))
 })
 
 gulp.task('html', function() {
     gulp.src('./src/**/*.html')
         .pipe(gulp.dest('./www'))
         .pipe(reload({stream: true}))
+        .pipe(notify('Html is updated!'))
 })
 
 
