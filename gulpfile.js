@@ -14,7 +14,7 @@ var sass = require('gulp-sass')
 var sourcemaps = require('gulp-sourcemaps')
 
 gulp.task('build', function() {
-    return gulp.src('./src/app.js')
+    gulp.src('./src/app.js')
         .pipe(through2.obj(function(file, enc, next) {
             browserify(file.path, {
                 //debug: process.env.NODE_ENV === 'development'
@@ -34,19 +34,22 @@ gulp.task('build', function() {
         })
         .pipe(gulpLoad.rename('app.js'))
         .pipe(gulp.dest('./www'))
+        .pipe(reload({stream: true}))
 })
 
 gulp.task('sass', function () {
-    return gulp.src('./src/scss/*.scss')
+    gulp.src('./src/scss/*.scss')
         .pipe(sourcemaps.init())
         .pipe(sass())
         .pipe(sourcemaps.write('./maps'))
         .pipe(gulp.dest('./www/css'))
+        .pipe(reload({stream: true}))
 })
 
 gulp.task('html', function() {
-    return gulp.src('./src/**/*.html')
+    gulp.src('./src/**/*.html')
         .pipe(gulp.dest('./www'))
+        .pipe(reload({stream: true}))
 })
 
 
@@ -57,9 +60,9 @@ gulp.task('serve', ['sass', 'html', 'build'], function() {
         }
     })
 
-    gulp.watch('./src/scss/*.scss', ['sass']).on('change', reload)
-    gulp.watch('./src/**/*.html', ['html']).on('change', reload)
-    gulp.watch('./src/**/*.js', ['build']).on('change', reload)
+    gulp.watch('./src/scss/*.scss', ['sass'])
+    gulp.watch('./src/**/*.html', ['html'])
+    gulp.watch('./src/**/*.js', ['build'])
 })
 
 gulp.task('default', ['serve'])
