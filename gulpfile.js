@@ -1,10 +1,7 @@
-// npm install --save-dev gulp gulp-babel babelify through2 gulp-rename gulp-load-plugins browser-sync gulp-sass gulp-sourcemaps jquery
-
 var gulp = require('gulp')
-var gulpLoad = require('gulp-load-plugins')()
+var rename = require('gulp-rename')()
 
 var browserify = require('browserify')
-var through2 = require('through2')
 var babelify = require('babelify')
 
 var browserSync = require("browser-sync")
@@ -15,26 +12,37 @@ var sourcemaps = require('gulp-sourcemaps')
 
 var notify = require('gulp-notify')
 
-gulp.task('build', function() {
-    gulp.src('./src/app.js')
-        .pipe(through2.obj(function(file, enc, next) {
-            browserify(file.path, {
-                //debug: process.env.NODE_ENV === 'development'
-                debug: true
-            })
-            .transform(babelify)
-            .bundle(function(err, res) {
-                if (err) return next(err)
+var source = require('vinyl-source-stream');
 
-                file.contents = res
-                next(null, file)
-            })
-        }))
-        .on('error', function(error) {
-            console.log(error.stack)
+var stringify = require('stringify')
+
+var plumber = require('gulp-plumber')
+var gutil = require('gulp-util')
+
+var when = require('gulp-if')
+
+module.exports = {
+    plumber: function() {
+        return plumber(function(error) {
+            gutil.log(gutil.colors.red(error.message))
             this.emit('end')
         })
-        .pipe(gulpLoad.rename('app.js'))
+    }
+}
+
+gulp.task('build', function() {
+    browserify({
+            entries: './src/app.js',
+            debug: true
+            //debug: process.env.NODE_ENV === 'development'
+        })
+        .transform(babelify)
+        .transform(stringify({
+            extensions: ['.html'], minify: true
+        }))
+        .bundle()
+        .pipe(plumber())
+        .pipe(source('app.js'))
         .pipe(gulp.dest('./www'))
         .pipe(reload({stream: true}))
         .pipe(notify('Js is updated!'))
@@ -42,6 +50,7 @@ gulp.task('build', function() {
 
 gulp.task('sass', function () {
     gulp.src('./src/scss/*.scss')
+        .pipe(plumber())
         .pipe(sourcemaps.init())
         .pipe(sass())
         .pipe(sourcemaps.write('./maps'))
@@ -52,6 +61,7 @@ gulp.task('sass', function () {
 
 gulp.task('html', function() {
     gulp.src('./src/**/*.html')
+        .pipe(plumber())
         .pipe(gulp.dest('./www'))
         .pipe(reload({stream: true}))
         .pipe(notify('Html is updated!'))
@@ -66,7 +76,7 @@ gulp.task('serve', ['sass', 'html', 'build'], function() {
     })
 
     gulp.watch('./src/scss/*.scss', ['sass'])
-    gulp.watch('./src/**/*.html', ['html'])
+    gulp.watch('./src/**/*.html', ['html', 'build'])
     gulp.watch('./src/**/*.js', ['build'])
 })
 

@@ -1,15 +1,14 @@
 import $ from 'jquery'
-import ConsoleWrapper from "./ConsoleWrapper.js";
+import {ClassA, ClassB} from './ClassA'
+import {Render} from './Render'
 
-var x = new ConsoleWrapper();
-x.speak();
+var a = new ClassA()
+var b = new ClassB()
+
+console.log(a.speak())
+console.log(b.speak())
 
 
-$(function($) {
-    console.log('1')
-    console.log($)
-
-    $('div').text('test2')
-
-    console.log(2)
+$(function() {
+    new Render().render()
 })
